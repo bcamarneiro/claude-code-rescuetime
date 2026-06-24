@@ -22,10 +22,11 @@ mkdir -p ~/.claude/rescuetime
 umask 077 && echo "YOUR_KEY" > ~/.claude/rescuetime/api_key   # or: export RESCUETIME_API_KEY=YOUR_KEY
 ```
 
-That's it — the plugin wires the hooks automatically. Until a key is present, the hooks are a silent no-op. Verify the key works with:
+That's it — the plugin wires the hooks automatically. Until a key is present, the hooks are a silent no-op. Verify it works by running the bundled command in Claude Code:
 
-```sh
-python3 "$(echo ~)/.claude/plugins/<...>/rt-claude" test   # or clone the repo and run ./rt-claude test
+```text
+/rescuetime-test     # posts a test highlight and reports whether your key works
+/rescuetime-status   # shows config + whether your key is detected
 ```
 
 ## Install (manual / without the plugin system)
@@ -76,10 +77,19 @@ Create `~/.claude/rescuetime/config.json` to override defaults:
 
 ## Commands
 
+If you installed the **plugin**, two slash commands are available in Claude Code:
+
+| Command | Does |
+|---|---|
+| `/rescuetime-status` | Show config + active sessions and whether your API key is detected |
+| `/rescuetime-test` | Post a one-off test highlight to verify your key |
+
+For the **manual / CLI** install, the same plus a couple more are on the shim:
+
 ```sh
-./rt-claude --dry-run hook --event SessionStart <<< '{"session_id":"s1","cwd":"/path/to/repo"}'  # preview, posts nothing
-./rt-claude status      # show config + active sessions
+./rt-claude status      # config + active sessions
 ./rt-claude test        # post a one-off test highlight
+./rt-claude --dry-run hook --event SessionStart <<< '{"session_id":"s1","cwd":"/path/to/repo"}'  # preview, posts nothing
 ./rt-claude uninstall   # remove the hooks this tool added from settings.json
 ```
 
