@@ -9,7 +9,7 @@
     {
       "name": "claude-code-rescuetime",
       "description": "Log which project and branch you work on in Claude Code to your RescueTime timeline as Highlights. Hook-based, no daemon, stdlib-only Python.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "source": "./",
       "author": {
         "name": "Bruno Camarneiro",

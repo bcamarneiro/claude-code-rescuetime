@@ -11,6 +11,8 @@ from rt_claude import state as statemod
 from rt_claude.emit import decide
 from rt_claude.client import post_highlight
 
+ISSUE_URL = "https://github.com/bcamarneiro/claude-code-rescuetime/issues/1"
+
 
 def _build_parser():
     p = argparse.ArgumentParser(prog="rt-claude", description="Log Claude Code work to RescueTime")
@@ -52,6 +54,32 @@ def _detach_kwargs(platform=None):
     return {"start_new_session": True}
 
 
+def _windows_first_run_notice(platform=None):
+    """One-time, Windows-only nudge asking the user to report back.
+
+    Returns the message string the first time it runs on Windows (and writes a
+    marker so it never fires again), or None if not on Windows / already shown.
+    Windows support is unverified by the maintainer, so this recruits installers
+    as testers via issue #1.
+    """
+    platform = sys.platform if platform is None else platform
+    if platform != "win32":
+        return None
+    marker = cfgmod.STATE_DIR / "windows-notice-shown"
+    try:
+        if marker.exists():
+            return None
+        cfgmod.STATE_DIR.mkdir(parents=True, exist_ok=True)
+        marker.write_text("shown")
+    except OSError:
+        return None
+    return (
+        "[claude-code-rescuetime] You're on Windows, where this plugin is "
+        "best-effort and not yet verified by the maintainer. If it works (or "
+        "doesn't), a quick report would be a big help: " + ISSUE_URL
+    )
+
+
 def _spawn_emit(desc, source):
     cfgmod.STATE_DIR.mkdir(parents=True, exist_ok=True)
     shim = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rt-claude")
@@ -81,6 +109,11 @@ def cmd_hook(args) -> int:
                 print("WOULD POST: {}".format(action["description"]))
             elif cfgmod.resolve_api_key():
                 _spawn_emit(action["description"], action["source"])
+        notice = _windows_first_run_notice()
+        if notice:
+            # systemMessage is surfaced to the user by Claude Code without
+            # polluting the model context.
+            print(json.dumps({"systemMessage": notice}))
     except Exception as e:  # never break a turn
         _log("hook error: {}".format(e))
     return 0
@@ -121,6 +154,8 @@ def cmd_status(args) -> int:
     sd = statemod.SESSIONS_DIR
     sessions = sorted(p.name for p in sd.glob("*.json")) if sd.exists() else []
     print("active sessions: {}".format(sessions or "none"))
+    if sys.platform == "win32":
+        print("platform: Windows — best-effort & unverified; please report at {}".format(ISSUE_URL))
     return 0
 
 

@@ -105,7 +105,9 @@ Only the **repo name**, **branch name**, and **date** are ever sent to RescueTim
 ### Platform support
 
 - **macOS / Linux** — fully supported (maintainer-tested).
-- **Windows** — best-effort. The hooks try `python3` then fall back to `python`, and the background POST uses Windows `DETACHED_PROCESS` creation flags instead of the POSIX session detach. This is **not yet verified on a Windows machine** — if you run it on Windows, a confirmation (or bug report) is very welcome. Requires Python on `PATH` as `python` (the default for the python.org installer).
+- **Windows** — best-effort. The hooks try `python3` then fall back to `python`, and the background POST uses Windows `DETACHED_PROCESS` creation flags instead of the POSIX session detach. Requires Python on `PATH` as `python` (the default for the python.org installer).
+
+> **🪟 Help wanted — Windows testers.** Windows support is implemented but **not yet verified on a real Windows machine**. If you run it on Windows, please report whether it works (or doesn't) in **[issue #1](https://github.com/bcamarneiro/claude-code-rescuetime/issues/1)** — there's a 5-minute test checklist there. On first run, the plugin will also point you to that issue. A single confirmation turns Windows from "best-effort" into "supported." 🙏
 
 ## License
 
