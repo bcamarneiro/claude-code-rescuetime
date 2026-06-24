@@ -1,0 +1,13 @@
+# Secrets — API key never committed
+api_key
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local runtime state (canonical location is ~/.claude/rescuetime/)
+rescuetime/
+*.log
