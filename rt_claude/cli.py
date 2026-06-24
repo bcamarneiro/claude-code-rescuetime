@@ -58,30 +58,36 @@ def _detach_kwargs(platform=None):
     return {"start_new_session": True}
 
 
-def _windows_first_run_notice(platform=None):
-    """One-time, Windows-only nudge asking the user to report back.
+SETUP_NUDGE = "claude-code-rescuetime is installed but not connected — run /rescuetime-setup to link your RescueTime account."
 
-    Returns the message string the first time it runs on Windows (and writes a
-    marker so it never fires again), or None if not on Windows / already shown.
-    Windows support is unverified by the maintainer, so this recruits installers
-    as testers via issue #1.
-    """
+
+def _first_run_notice(platform=None):
+    """One-time notice: nudge unconfigured users to /rescuetime-setup, and warn
+    Windows users it's unverified. Fires once via a marker; emits nothing (and
+    writes no marker) when neither condition applies."""
     platform = sys.platform if platform is None else platform
-    if platform != "win32":
-        return None
-    marker = cfgmod.STATE_DIR / "windows-notice-shown"
+    marker = cfgmod.STATE_DIR / "first-run-notice-shown"
     try:
         if marker.exists():
             return None
+    except OSError:
+        return None
+    lines = []
+    if not cfgmod.resolve_api_key():
+        lines.append(SETUP_NUDGE)
+    if platform == "win32":
+        lines.append(
+            "You're on Windows, where this plugin is best-effort and not yet "
+            "verified by the maintainer — please report at " + ISSUE_URL
+        )
+    if not lines:
+        return None
+    try:
         cfgmod.STATE_DIR.mkdir(parents=True, exist_ok=True)
         marker.write_text("shown")
     except OSError:
         return None
-    return (
-        "[claude-code-rescuetime] You're on Windows, where this plugin is "
-        "best-effort and not yet verified by the maintainer. If it works (or "
-        "doesn't), a quick report would be a big help: " + ISSUE_URL
-    )
+    return "[claude-code-rescuetime] " + " ".join(lines)
 
 
 def _read_key(args):
@@ -157,7 +163,7 @@ def cmd_hook(args) -> int:
                 print("WOULD POST: {}".format(action["description"]))
             elif cfgmod.resolve_api_key():
                 _spawn_emit(action["description"], action["source"])
-        notice = _windows_first_run_notice()
+        notice = _first_run_notice()
         if notice:
             # systemMessage is surfaced to the user by Claude Code without
             # polluting the model context.
