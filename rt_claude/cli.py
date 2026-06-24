@@ -27,6 +27,8 @@ def _build_parser():
     e = sub.add_parser("_emit", help=argparse.SUPPRESS)
     e.add_argument("--desc", required=True)
     e.add_argument("--source", required=True)
+    sk = sub.add_parser("set-key", help="Save your RescueTime API key")
+    sk.add_argument("key", nargs="?", default=None)
     return p
 
 
@@ -78,6 +80,31 @@ def _windows_first_run_notice(platform=None):
         "best-effort and not yet verified by the maintainer. If it works (or "
         "doesn't), a quick report would be a big help: " + ISSUE_URL
     )
+
+
+def _read_key(args):
+    if getattr(args, "key", None):
+        return args.key
+    stdin = sys.stdin
+    if stdin is not None and stdin.isatty():
+        import getpass
+        return getpass.getpass("RescueTime API key: ")
+    return stdin.read() if stdin is not None else ""
+
+
+def cmd_set_key(args) -> int:
+    key = (_read_key(args) or "").strip()
+    if not key:
+        print("No key provided. Usage: rt-claude set-key <KEY>  (or pipe it on stdin)")
+        return 1
+    cfgmod.write_api_key(key, cfgmod.API_KEY_PATH)
+    print("Saved key to {}".format(cfgmod.API_KEY_PATH))
+    try:
+        status = post_highlight(key, "rt-claude setup test", "claude-code")
+        print("Verified — test highlight posted (HTTP {}).".format(status))
+    except Exception as e:
+        print("Saved, but the test post failed ({}). Double-check the key.".format(e))
+    return 0
 
 
 def _spawn_emit(desc, source):
@@ -207,6 +234,7 @@ def main(argv):
         "status": cmd_status,
         "install": cmd_install,
         "uninstall": cmd_uninstall,
+        "set-key": cmd_set_key,
     }
     fn = dispatch.get(args.command)
     if fn:

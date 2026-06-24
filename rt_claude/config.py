@@ -2,6 +2,7 @@ import json, os
 from pathlib import Path
 from typing import Optional
 
+
 STATE_DIR = Path.home() / ".claude" / "rescuetime"
 CONFIG_PATH = STATE_DIR / "config.json"
 API_KEY_PATH = STATE_DIR / "api_key"
@@ -23,6 +24,19 @@ def load_config(config_path: Path = CONFIG_PATH) -> dict:
     except (json.JSONDecodeError, OSError, ValueError):
         pass
     return cfg
+
+def write_api_key(key, key_path: Path = API_KEY_PATH) -> None:
+    key_path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(str(key_path), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        os.write(fd, key.strip().encode("utf-8"))
+    finally:
+        os.close(fd)
+    try:
+        os.chmod(str(key_path), 0o600)
+    except OSError:
+        pass  # best-effort on Windows
+
 
 def resolve_api_key(env: Optional[dict] = None, key_path: Path = API_KEY_PATH) -> Optional[str]:
     env = os.environ if env is None else env
