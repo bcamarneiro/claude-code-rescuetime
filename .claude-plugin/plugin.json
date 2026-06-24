@@ -1,0 +1,20 @@
+{
+  "name": "claude-code-rescuetime",
+  "version": "0.1.0",
+  "description": "Log which project and branch you work on in Claude Code to your RescueTime timeline as Highlights. Hook-based, no daemon, stdlib-only Python.",
+  "author": {
+    "name": "Bruno Camarneiro",
+    "email": "bruno@futuresketches.com"
+  },
+  "homepage": "https://github.com/bcamarneiro/claude-code-rescuetime",
+  "repository": "https://github.com/bcamarneiro/claude-code-rescuetime",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "rescuetime",
+    "time-tracking",
+    "hooks",
+    "productivity",
+    "highlights"
+  ]
+}

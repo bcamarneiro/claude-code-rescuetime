@@ -1,76 +1,56 @@
-# rt-claude
+# claude-code-rescuetime
 
-`rt-claude` sends Claude Code session highlights to [RescueTime](https://www.rescuetime.com/), letting you track time spent across repos and branches automatically — without any manual logging.
+Log which **project and branch** you work on inside [Claude Code](https://claude.com/claude-code) to your [RescueTime](https://www.rescuetime.com/) timeline as **Highlights**.
 
-## What it does
+RescueTime already tracks that you were in your terminal/editor — but while you're in Claude Code it only sees "Terminal", blind to *what* you were working on. This fills that gap: a clean, dated trail of `myrepo · main` → `myrepo · fix/login` → `other-repo · main`, annotating the time RescueTime is already tracking. It's [`git-commits-to-rescuetime-daily-highlights`](https://github.com/RescueTime/git-commits-to-rescuetime-daily-highlights) reimagined for AI coding sessions instead of commits.
 
-Each time a Claude Code hook fires (session start, prompt submit, stop, session end), `rt-claude` reads the git repo name and current branch from the working directory, then posts a highlight to the RescueTime Highlights API. The foreground hook exits immediately (no network latency); the actual HTTP POST is dispatched to a detached background process.
+- **No daemon.** Pure Claude Code hooks.
+- **No dependencies.** Standard-library Python 3.9+ only.
+- **Private by design.** The only data sent to RescueTime is **repo name + branch + date** — never prompts, code, file contents, or paths.
 
-## Install
+## Install (as a Claude Code plugin — recommended)
 
-```sh
-# 1. Clone or copy this repo somewhere permanent, e.g.:
-git clone https://github.com/bcamarneiro/rescuetime-claude ~/.local/share/rt-claude
-
-# 2. Make the shim executable
-chmod +x ~/.local/share/rt-claude/rt-claude
-
-# 3. Set your RescueTime API key (get it at rescuetime.com/anapi/manage)
-export RESCUETIME_API_KEY=your_key_here
-# Or write it to a file (never committed):
-echo "your_key_here" > ~/.claude/rescuetime/api_key
-
-# 4. Wire Claude Code hooks
-~/.local/share/rt-claude/rt-claude install
-
-# 5. Verify
-~/.local/share/rt-claude/rt-claude test
+```text
+/plugin marketplace add bcamarneiro/claude-code-rescuetime
+/plugin install claude-code-rescuetime@claude-code-rescuetime
 ```
 
-## Usage
+Then set your RescueTime API key (from <https://www.rescuetime.com/anapi/manage>):
 
-### Hook events
+```sh
+mkdir -p ~/.claude/rescuetime
+umask 077 && echo "YOUR_KEY" > ~/.claude/rescuetime/api_key   # or: export RESCUETIME_API_KEY=YOUR_KEY
+```
 
-Claude Code calls the hook automatically. The following events are wired by `install`:
+That's it — the plugin wires the hooks automatically. Until a key is present, the hooks are a silent no-op. Verify the key works with:
+
+```sh
+python3 "$(echo ~)/.claude/plugins/<...>/rt-claude" test   # or clone the repo and run ./rt-claude test
+```
+
+## Install (manual / without the plugin system)
+
+```sh
+git clone https://github.com/bcamarneiro/claude-code-rescuetime ~/.local/share/claude-code-rescuetime
+cd ~/.local/share/claude-code-rescuetime
+chmod +x rt-claude
+echo "YOUR_KEY" > ~/.claude/rescuetime/api_key   # umask 077 first
+./rt-claude install     # writes the hooks into ~/.claude/settings.json
+./rt-claude test        # confirm a highlight posts
+```
+
+> **Use one method, not both.** The plugin and `./rt-claude install` each register the same hooks — running both double-posts. If you installed the plugin, don't also run `install` (and vice-versa).
+
+## How it works
+
+Each time a Claude Code hook fires (`SessionStart`, `UserPromptSubmit`, `Stop`, `SessionEnd`), the tool reads the git repo + branch from the session's working directory and, **only when the context changed** since the last post, dispatches a highlight to the RescueTime Highlights API. The foreground hook returns instantly — the actual HTTP POST runs in a detached background process, so it never adds latency to a turn, and a network failure can never break your session.
 
 | Event | Behavior |
 |---|---|
-| `SessionStart` | Posts on new repo/branch context |
-| `UserPromptSubmit` | Posts on context change or heartbeat |
-| `Stop` | Posts on context change |
-| `SessionEnd` | Clears session state, no post |
-
-### Dry run
-
-Preview what would be posted without sending anything:
-
-```sh
-rt-claude --dry-run hook --event SessionStart <<< '{"session_id":"s1","cwd":"/path/to/repo"}'
-```
-
-### Status
-
-Show current configuration and active session files:
-
-```sh
-rt-claude status
-```
-
-### Test
-
-Post a one-off test highlight to verify your API key works:
-
-```sh
-rt-claude test
-```
-
-### Uninstall
-
-Remove the hooks from `~/.claude/settings.json`:
-
-```sh
-rt-claude uninstall
-```
+| `SessionStart` | Post once for the starting repo/branch |
+| `UserPromptSubmit` | Post when repo/branch changed (or on heartbeat, if enabled) |
+| `Stop` | Post when repo/branch changed |
+| `SessionEnd` | Clear session state, no post |
 
 ## Configuration
 
@@ -89,11 +69,30 @@ Create `~/.claude/rescuetime/config.json` to override defaults:
 | Field | Default | Description |
 |---|---|---|
 | `enabled` | `true` | Set to `false` to pause all posting |
-| `source_label` | `"claude-code"` | Source tag shown in RescueTime highlights |
+| `source_label` | `"claude-code"` | Source tag shown in RescueTime |
 | `heartbeat_minutes` | `0` | Re-post every N minutes on the same context (0 = only on context change) |
-| `exclude_projects` | `[]` | List of repo names or glob patterns to skip (e.g. `["dotfiles", "tmp-*"]`) |
-| `description_template` | `"{project} · {branch}"` | Template for the highlight description; `{project}` = repo name, `{branch}` = branch name |
+| `exclude_projects` | `[]` | Repo names or glob patterns to skip (e.g. `["dotfiles", "client-*"]`) |
+| `description_template` | `"{project} · {branch}"` | `{project}` = repo name, `{branch}` = branch name |
+
+## Commands
+
+```sh
+./rt-claude --dry-run hook --event SessionStart <<< '{"session_id":"s1","cwd":"/path/to/repo"}'  # preview, posts nothing
+./rt-claude status      # show config + active sessions
+./rt-claude test        # post a one-off test highlight
+./rt-claude uninstall   # remove the hooks this tool added from settings.json
+```
 
 ## Privacy
 
-Only the **repo name**, **branch name**, and **date** are ever sent to RescueTime. No code, no file paths, no prompt content, no personal data. The API key is read from an environment variable or a local file — it is never written to config or committed to the repo.
+Only the **repo name**, **branch name**, and **date** are ever sent to RescueTime. No code, no file paths, no prompt content. The API key is read from `RESCUETIME_API_KEY` or `~/.claude/rescuetime/api_key` (keep it `chmod 600`); it is never written to config or committed.
+
+## Requirements
+
+- Python 3.9+ (uses only the standard library)
+- macOS or Linux (the detached background POST uses a Unix mechanism; Windows is untested)
+- A RescueTime account with API access
+
+## License
+
+[MIT](./LICENSE)

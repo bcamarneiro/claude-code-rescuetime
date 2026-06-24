@@ -11,3 +11,6 @@ venv/
 # Local runtime state (canonical location is ~/.claude/rescuetime/)
 rescuetime/
 *.log
+
+# Superpowers SDD scratch
+.superpowers/
