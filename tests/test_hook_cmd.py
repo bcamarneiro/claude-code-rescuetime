@@ -27,6 +27,7 @@ class TestHookCmd(unittest.TestCase):
         self.state = state_mod
 
     def tearDown(self):
+        os.environ.pop("RESCUETIME_API_KEY", None)
         if self._orig_home is None:
             os.environ.pop("HOME", None)
         else:
@@ -76,6 +77,32 @@ class TestHookCmd(unittest.TestCase):
         with unittest.mock.patch("sys.stdin", io.StringIO(json.dumps(payload))):
             self.cli.main(["hook", "--event", "SessionEnd"])
         self.assertEqual(self.state.load_session("s3", sessions_dir), {})
+
+    def test_spawn_emit_called_when_api_key_present(self):
+        # Arrange: write an API key so resolve_api_key() returns truthy
+        import rt_claude.config as config_mod
+        config_mod.STATE_DIR.mkdir(parents=True, exist_ok=True)
+        config_mod.API_KEY_PATH.write_text("fake-test-key")
+        # Reload cli so it picks up the reloaded config_mod with the new key path
+        import rt_claude.cli as cli_mod
+        importlib.reload(cli_mod)
+        self.cli = cli_mod
+
+        payload = {"session_id": "s-spawn", "cwd": self._tmpdir.name}
+        # Stub resolve_context so no subprocess.run/git is invoked during cmd_hook,
+        # leaving subprocess.Popen free to be called only by _spawn_emit.
+        fake_ctx = {"project": "testproject", "branch": "main"}
+        with unittest.mock.patch("sys.stdin", io.StringIO(json.dumps(payload))):
+            with unittest.mock.patch("rt_claude.cli.resolve_context", return_value=fake_ctx):
+                with unittest.mock.patch("subprocess.Popen") as mock_popen:
+                    rc = self.cli.main(["hook", "--event", "SessionStart"])
+
+        self.assertEqual(rc, 0)
+        mock_popen.assert_called_once()
+        call_args = mock_popen.call_args[0][0]  # first positional arg (the command list)
+        self.assertIn("_emit", call_args)
+        self.assertIn("--desc", call_args)
+        self.assertIn("--source", call_args)
 
 
 if __name__ == "__main__":

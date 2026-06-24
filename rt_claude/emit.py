@@ -24,7 +24,7 @@ def decide(event: str, session: dict, context: dict, config: dict, now: float):
     if event == "SessionEnd":
         return None, new_session
 
-    context_key = "{}@{}".format(project, branch)
+    context_key = "{}@{}".format(project, branch or "")
     last_context = session.get("last_context")
     last_emit_at = session.get("last_emit_at", 0)
     heartbeat_min = config.get("heartbeat_minutes", 0) or 0

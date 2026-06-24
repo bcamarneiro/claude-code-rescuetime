@@ -38,6 +38,7 @@ def _log(msg):
 
 
 def _spawn_emit(desc, source):
+    cfgmod.STATE_DIR.mkdir(parents=True, exist_ok=True)
     shim = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rt-claude")
     try:
         with open(cfgmod.LOG_PATH, "a") as logf:
@@ -113,7 +114,11 @@ def cmd_install(args) -> int:
     settings_path = cfgmod.STATE_DIR.parent / "settings.json"
     settings = {}
     if settings_path.exists():
-        settings = json.loads(settings_path.read_text())
+        try:
+            settings = json.loads(settings_path.read_text())
+        except (json.JSONDecodeError, ValueError):
+            print("Could not parse {} (invalid JSON); aborting.".format(settings_path))
+            return 1
     shim = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rt-claude")
     settings = install_hooks(settings, shim)
     settings_path.write_text(json.dumps(settings, indent=2))
@@ -128,7 +133,11 @@ def cmd_uninstall(args) -> int:
     if not settings_path.exists():
         print("No settings.json found.")
         return 0
-    settings = json.loads(settings_path.read_text())
+    try:
+        settings = json.loads(settings_path.read_text())
+    except (json.JSONDecodeError, ValueError):
+        print("Could not parse {} (invalid JSON); aborting.".format(settings_path))
+        return 1
     settings = uninstall_hooks(settings)
     settings_path.write_text(json.dumps(settings, indent=2))
     print("Removed rt-claude hooks from {}".format(settings_path))

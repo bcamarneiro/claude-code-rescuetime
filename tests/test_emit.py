@@ -107,6 +107,17 @@ class TestDecide(unittest.TestCase):
         self.assertIsNotNone(action)
         self.assertNotIn("None", action["description"])
 
+    def test_no_git_branch_emits_once_and_deduplicates(self):
+        # Non-git context: branch=None
+        # First call (SessionStart) should emit
+        action, new_sess = decide("SessionStart", {}, self._ctx(branch=None), self._cfg(), 1000.0)
+        self.assertIsNotNone(action)
+        # context_key must not contain the literal string "None"
+        self.assertNotIn("None", new_sess["last_context"])
+        # Second call (Stop) with the same None branch using the session from above should NOT emit
+        action2, _ = decide("Stop", new_sess, self._ctx(branch=None), self._cfg(), 1001.0)
+        self.assertIsNone(action2)
+
 
 if __name__ == "__main__":
     unittest.main()
