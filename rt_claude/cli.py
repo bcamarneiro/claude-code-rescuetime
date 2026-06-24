@@ -12,6 +12,7 @@ from rt_claude.emit import decide
 from rt_claude.client import post_highlight
 
 ISSUE_URL = "https://github.com/bcamarneiro/claude-code-rescuetime/issues/1"
+KEY_PAGE_URL = "https://www.rescuetime.com/anapi/manage"
 
 
 def _build_parser():
@@ -29,6 +30,7 @@ def _build_parser():
     e.add_argument("--source", required=True)
     sk = sub.add_parser("set-key", help="Save your RescueTime API key")
     sk.add_argument("key", nargs="?", default=None)
+    sub.add_parser("setup", help="Open the RescueTime key page and explain how to save your key")
     return p
 
 
@@ -104,6 +106,25 @@ def cmd_set_key(args) -> int:
         print("Verified — test highlight posted (HTTP {}).".format(status))
     except Exception as e:
         print("Saved, but the test post failed ({}). Double-check the key.".format(e))
+    return 0
+
+
+def cmd_setup(args) -> int:
+    import webbrowser
+    try:
+        opened = bool(webbrowser.open(KEY_PAGE_URL))
+    except Exception:
+        opened = False
+    if opened:
+        print("Opened your browser to the RescueTime API-key page.")
+    print("Get your key at: {}".format(KEY_PAGE_URL))
+    shim = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rt-claude")
+    print("")
+    print("Then finish one of two ways:")
+    print("  1) Private (recommended) — in your OWN terminal, run:")
+    print("       {} {} set-key".format(sys.executable, shim))
+    print("     and paste your key at the hidden prompt.")
+    print("  2) Convenient — paste the key into this chat and it will be saved for you.")
     return 0
 
 
@@ -235,6 +256,7 @@ def main(argv):
         "install": cmd_install,
         "uninstall": cmd_uninstall,
         "set-key": cmd_set_key,
+        "setup": cmd_setup,
     }
     fn = dispatch.get(args.command)
     if fn:
