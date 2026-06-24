@@ -22,12 +22,17 @@ mkdir -p ~/.claude/rescuetime
 umask 077 && echo "YOUR_KEY" > ~/.claude/rescuetime/api_key   # or: export RESCUETIME_API_KEY=YOUR_KEY
 ```
 
-That's it — the plugin wires the hooks automatically. Until a key is present, the hooks are a silent no-op. Verify it works by running the bundled command in Claude Code:
+That's it — the plugin wires the hooks automatically. Until a key is present, the hooks are a silent no-op.
+
+### First-time setup
+
+After installing, run:
 
 ```text
-/rescuetime-test     # posts a test highlight and reports whether your key works
-/rescuetime-status   # shows config + whether your key is detected
+/rescuetime-setup
 ```
+
+It opens the RescueTime API-key page and saves your key — privately if you use the printed terminal command, or conveniently if you paste the key into the chat. On a fresh install you'll also be nudged to run it. To check or re-test later: `/rescuetime-status` and `/rescuetime-test`.
 
 ## Install (manual / without the plugin system)
 
