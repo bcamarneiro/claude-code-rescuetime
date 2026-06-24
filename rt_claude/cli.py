@@ -9,7 +9,7 @@ from rt_claude import config as cfgmod
 from rt_claude.context import resolve_context
 from rt_claude import state as statemod
 from rt_claude.emit import decide
-from rt_claude.client import post_highlight
+from rt_claude.client import post_highlight, PremiumRequiredError
 
 ISSUE_URL = "https://github.com/bcamarneiro/claude-code-rescuetime/issues/1"
 KEY_PAGE_URL = "https://www.rescuetime.com/anapi/manage"
@@ -110,6 +110,12 @@ def cmd_set_key(args) -> int:
     try:
         status = post_highlight(key, "rt-claude setup test", "claude-code")
         print("Verified — test highlight posted (HTTP {}).".format(status))
+    except PremiumRequiredError:
+        print(
+            "Key saved and valid — but RescueTime Daily Highlights are a Premium "
+            "feature, so a free/Lite account can't post. Upgrade to RescueTime "
+            "Premium to start logging: https://www.rescuetime.com/premium"
+        )
     except Exception as e:
         print("Saved, but the test post failed ({}). Double-check the key.".format(e))
     return 0
@@ -194,6 +200,13 @@ def cmd_test(args) -> int:
         status = post_highlight(key, "rt-claude test highlight", "claude-code")
         print("Posted test highlight (HTTP {}).".format(status))
         return 0
+    except PremiumRequiredError:
+        print(
+            "Your key works, but RescueTime Daily Highlights are a Premium "
+            "feature — the free/Lite plan can't post. Upgrade at "
+            "https://www.rescuetime.com/premium"
+        )
+        return 1
     except Exception as e:
         print("Failed: {}".format(e))
         return 1

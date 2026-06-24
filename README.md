@@ -8,6 +8,8 @@ RescueTime already tracks that you were in your terminal/editor — but while yo
 - **No dependencies.** Standard-library Python 3.9+ only.
 - **Private by design.** The only data sent to RescueTime is **repo name + branch + date** — never prompts, code, file contents, or paths.
 
+> **⚠️ Requires RescueTime Premium.** Daily Highlights are a paid RescueTime feature, so a **free/Lite account can't post** — `set-key` saves your key fine, but RescueTime rejects the write with a "premium feature" error. See [RescueTime pricing](https://www.rescuetime.com/premium).
+
 ## Install (as a Claude Code plugin — recommended)
 
 ```text
@@ -105,7 +107,7 @@ Only the **repo name**, **branch name**, and **date** are ever sent to RescueTim
 ## Requirements
 
 - Python 3.9+ (uses only the standard library), on `PATH` as either `python3` or `python`
-- A RescueTime account with API access
+- A **RescueTime Premium** account — Daily Highlights are premium-only; a free/Lite plan can't post (see the note at the top)
 
 ### Platform support
 
