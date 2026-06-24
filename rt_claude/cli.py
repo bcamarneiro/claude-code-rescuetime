@@ -37,13 +37,28 @@ def _log(msg):
         pass
 
 
+def _detach_kwargs(platform=None):
+    """Popen kwargs that detach the background POST from the hook process.
+
+    POSIX uses a new session (setsid); Windows has no setsid, so it uses
+    DETACHED_PROCESS + a new process group instead.
+    """
+    platform = sys.platform if platform is None else platform
+    if platform == "win32":
+        flags = getattr(subprocess, "DETACHED_PROCESS", 0x00000008) | getattr(
+            subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200
+        )
+        return {"creationflags": flags}
+    return {"start_new_session": True}
+
+
 def _spawn_emit(desc, source):
     cfgmod.STATE_DIR.mkdir(parents=True, exist_ok=True)
     shim = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rt-claude")
     try:
         with open(cfgmod.LOG_PATH, "a") as logf:
             subprocess.Popen([sys.executable, shim, "_emit", "--desc", desc, "--source", source],
-                             stdout=logf, stderr=logf, start_new_session=True)
+                             stdout=logf, stderr=logf, **_detach_kwargs())
     except OSError as e:
         _log("spawn failed: {}".format(e))
 

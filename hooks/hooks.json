@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=SessionStart"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=SessionStart || python \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=SessionStart"
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=UserPromptSubmit"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=UserPromptSubmit || python \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=UserPromptSubmit"
           }
         ]
       }
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=Stop"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=Stop || python \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=Stop"
           }
         ]
       }
@@ -37,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=SessionEnd"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=SessionEnd || python \"${CLAUDE_PLUGIN_ROOT}/rt-claude\" hook --event=SessionEnd"
           }
         ]
       }

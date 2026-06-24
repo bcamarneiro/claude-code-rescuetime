@@ -99,9 +99,13 @@ Only the **repo name**, **branch name**, and **date** are ever sent to RescueTim
 
 ## Requirements
 
-- Python 3.9+ (uses only the standard library)
-- macOS or Linux (the detached background POST uses a Unix mechanism; Windows is untested)
+- Python 3.9+ (uses only the standard library), on `PATH` as either `python3` or `python`
 - A RescueTime account with API access
+
+### Platform support
+
+- **macOS / Linux** — fully supported (maintainer-tested).
+- **Windows** — best-effort. The hooks try `python3` then fall back to `python`, and the background POST uses Windows `DETACHED_PROCESS` creation flags instead of the POSIX session detach. This is **not yet verified on a Windows machine** — if you run it on Windows, a confirmation (or bug report) is very welcome. Requires Python on `PATH` as `python` (the default for the python.org installer).
 
 ## License
 
