@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "source_label": "claude-code",
+  "heartbeat_minutes": 0,
+  "exclude_projects": [],
+  "description_template": "{project} · {branch}"
+}
